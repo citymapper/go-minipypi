@@ -17,13 +17,27 @@ jobs:
           name: Run unit tests
           command: gotestsum --junitfile ${TEST_RESULTS}/go-test-report.xml
 
-      - run: go build -ldflags "-X main.date=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.commit=${CIRCLE_SHA1}"
+      - run:
+          name: build amd64
+          environment:
+            GOOS: linux
+            GOARCH: amd64
+          command: |
+            go build -ldflags "-X main.date=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.commit=${CIRCLE_SHA1}" -o go-minipypi-Linux-amd64
+            gzip go-minipypi-Linux-amd64
 
       - run:
-          name: Create build artifact
+          name: build arm64
+          environment:
+            GOOS: linux
+            GOARCH: arm64
           command: |
-            gzip go-minipypi
-            mv -f go-minipypi.gz "$OUTPUT_BIN/go-minipypi-`uname -s`-`uname -m`.gz"
+            go build -ldflags "-X main.date=`date -u +%Y-%m-%dT%H:%M:%SZ` -X main.commit=${CIRCLE_SHA1}" -o go-minipypi-Linux-arm64
+            gzip go-minipypi-Linux-arm64
+
+      - run:
+          name: Create build artifacts
+          command: mv -f go-minipypi-*.gz "$OUTPUT_BIN"
 
       - store_artifacts:
           path: *test_results
